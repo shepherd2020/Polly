@@ -6,9 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using PollyClient;
+using Refit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Polly
@@ -25,6 +28,14 @@ namespace Polly
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddRefitClient<IPollyApiProvider>()
+                .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:26301/"))
+                //.AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
+                //.AddPolicyHandler(GetRetryPolicy())
+                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)));
+                //.AddPolicyHandler(GetCircuitBreakerPolicy())
+                //.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(3, 3))
+                //.AddPolicyHandler(GetFallbackPolicy());
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
