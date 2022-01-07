@@ -25,5 +25,12 @@ namespace Polly.Controllers
             var result = await _pollyApiProvider.GetTimeout();
             return Ok(result);
         }
+
+        [HttpGet("Retry")]
+        public async Task<ActionResult> Retry()
+        {
+            var result = await _pollyApiProvider.GetWaitRetry();
+            return Ok(result);
+        }
     }
 }

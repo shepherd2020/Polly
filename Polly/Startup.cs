@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Polly.Extensions.Http;
 using PollyClient;
 using Refit;
 using System;
@@ -29,9 +30,9 @@ namespace Polly
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRefitClient<IPollyApiProvider>()
-                .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:26301/"))
+                .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:5000/api"))
                 //.AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
-                //.AddPolicyHandler(GetRetryPolicy())
+                .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)));
                 //.AddPolicyHandler(GetCircuitBreakerPolicy())
                 //.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(3, 3))
@@ -62,6 +63,13 @@ namespace Polly
             {
                 endpoints.MapControllers();
             });
+        }
+
+        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(4, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) / 2));
         }
     }
 }
