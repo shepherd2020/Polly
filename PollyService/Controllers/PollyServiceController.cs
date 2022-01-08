@@ -46,5 +46,14 @@ namespace PollyService.Controllers
             return Enumerable.Range(1, 5).Select(index => Summaries[rng.Next(Summaries.Length)])
                 .ToArray();
         }
+
+        [HttpGet("Working")]
+        public IEnumerable<string> Working()
+        {
+            var rng = new Random();
+
+            return Enumerable.Range(1, 5).Select(index => Summaries[rng.Next(Summaries.Length)])
+                .ToArray();
+        }
     }
 }

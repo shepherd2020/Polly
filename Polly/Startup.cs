@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
 using PollyClient;
 using Refit;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Polly
@@ -31,12 +33,13 @@ namespace Polly
         {
             services.AddRefitClient<IPollyApiProvider>()
                 .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:5000"))
-                //.AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
+                .AddPolicyHandler(GetFallbackPolicy())
                 .AddPolicyHandler(GetRetryPolicy())
-                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)))
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+                .AddPolicyHandler(GetCircuitBreakerPolicy())
+                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)));
+                
                 //.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(3, 3))
-                //.AddPolicyHandler(GetFallbackPolicy());
+                
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -77,6 +80,24 @@ namespace Polly
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .CircuitBreakerAsync(3, TimeSpan.FromSeconds(15));
+        }
+
+        static IAsyncPolicy<HttpResponseMessage> GetFallbackPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .Or<BrokenCircuitException>()
+                .FallbackAsync<HttpResponseMessage>(FallbackAction);
+        }
+
+        static async Task<HttpResponseMessage> FallbackAction(CancellationToken cancellationToken)
+        {
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri("http://localhost:5000/");
+                HttpResponseMessage response = await client.GetAsync("/pollyservice/Working");
+                return response;
+            }
         }
     }
 }

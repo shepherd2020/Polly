@@ -8,17 +8,14 @@ namespace PollyClient
 {
     public interface IPollyApiProvider
     {
-        [Get("/retry")]
-        Task<List<string>> GetRetry();
-
         [Get("/pollyservice/Timeout")]
         Task<List<string>> GetTimeout();
 
         [Get("/pollyservice/Error")]
         Task<List<string>> GetError();
 
-        [Get("/longaction")]
-        Task<List<string>> GetLongAction();
+        [Get("/pollyservice/Working")]
+        Task<List<string>> GetWorking();
 
         [Get("/cache")]
         Task<List<string>> GetCache(string start);
