@@ -30,11 +30,11 @@ namespace Polly
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRefitClient<IPollyApiProvider>()
-                .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:5000/api"))
+                .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:5000"))
                 //.AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
                 .AddPolicyHandler(GetRetryPolicy())
-                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)));
-                //.AddPolicyHandler(GetCircuitBreakerPolicy())
+                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)))
+                .AddPolicyHandler(GetCircuitBreakerPolicy());
                 //.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(3, 3))
                 //.AddPolicyHandler(GetFallbackPolicy());
 
@@ -70,6 +70,13 @@ namespace Polly
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .WaitAndRetryAsync(4, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) / 2));
+        }
+
+        static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .CircuitBreakerAsync(3, TimeSpan.FromSeconds(15));
         }
     }
 }

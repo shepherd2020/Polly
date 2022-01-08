@@ -36,8 +36,8 @@ namespace PollyService.Controllers
                 .ToArray();
         }
 
-        [HttpGet("WaitRetry")]
-        public IEnumerable<string> WaitRetry()
+        [HttpGet("Error")]
+        public IEnumerable<string> Error()
         {
             var rng = new Random();
 

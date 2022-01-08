@@ -14,8 +14,8 @@ namespace PollyClient
         [Get("/pollyservice/Timeout")]
         Task<List<string>> GetTimeout();
 
-        [Get("/pollyservice/WaitRetry")]
-        Task<List<string>> GetWaitRetry();
+        [Get("/pollyservice/Error")]
+        Task<List<string>> GetError();
 
         [Get("/longaction")]
         Task<List<string>> GetLongAction();

@@ -29,7 +29,14 @@ namespace Polly.Controllers
         [HttpGet("Retry")]
         public async Task<ActionResult> Retry()
         {
-            var result = await _pollyApiProvider.GetWaitRetry();
+            var result = await _pollyApiProvider.GetError();
+            return Ok(result);
+        }
+
+        [HttpGet("CircuitBreaker")]
+        public async Task<ActionResult> CircuitBreaker()
+        {
+            var result = await _pollyApiProvider.GetError();
             return Ok(result);
         }
     }
