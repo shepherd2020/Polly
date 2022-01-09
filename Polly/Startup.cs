@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Polly.Bulkhead;
 using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
 using PollyClient;
@@ -36,9 +37,8 @@ namespace Polly
                 .AddPolicyHandler(GetFallbackPolicy())
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetCircuitBreakerPolicy())
-                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)));
-                
-                //.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(3, 3))
+                .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10)))
+                .AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(3, 3));
                 
 
             services.AddControllers();
@@ -87,6 +87,7 @@ namespace Polly
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .Or<BrokenCircuitException>()
+                .Or<BulkheadRejectedException>()
                 .FallbackAsync<HttpResponseMessage>(FallbackAction);
         }
 

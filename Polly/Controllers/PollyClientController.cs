@@ -39,5 +39,19 @@ namespace Polly.Controllers
             var result = await _pollyApiProvider.GetError();
             return Ok(result);
         }
+
+        [HttpGet("Fallback")]
+        public async Task<ActionResult> Fallback()
+        {
+            var result = await _pollyApiProvider.GetError();
+            return Ok(result);
+        }
+
+        [HttpGet("BulkheadIsolation")]
+        public async Task<ActionResult> BulkheadIsolation()
+        {
+            var result = await _pollyApiProvider.GetWorkingDelayed();
+            return Ok(result);
+        }
     }
 }
