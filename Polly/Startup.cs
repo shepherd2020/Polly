@@ -7,8 +7,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Polly.Bulkhead;
+using Polly.Caching;
+using Polly.Caching.Memory;
 using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
+using Polly.Registry;
 using PollyClient;
 using Refit;
 using System;
@@ -32,6 +35,10 @@ namespace Polly
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddPolicyRegistry();
+            services.AddMemoryCache();
+            services.AddSingleton<IAsyncCacheProvider, MemoryCacheProvider>();
+
             services.AddRefitClient<IPollyApiProvider>()
                 .ConfigureHttpClient(c => c.BaseAddress = new Uri("http://localhost:5000"))
                 .AddPolicyHandler(GetFallbackPolicy())
@@ -49,7 +56,7 @@ namespace Polly
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IAsyncCacheProvider cacheProvider, IPolicyRegistry<string> registry)
         {
             if (env.IsDevelopment())
             {
@@ -66,6 +73,11 @@ namespace Polly
             {
                 endpoints.MapControllers();
             });
+
+            AsyncCachePolicy<List<string>> cachePolicy =
+                Policy.CacheAsync<List<string>>(cacheProvider, TimeSpan.FromMinutes(10));
+
+            registry.Add("CachingPolicy", cachePolicy);
         }
 
         static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()

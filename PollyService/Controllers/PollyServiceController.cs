@@ -65,5 +65,11 @@ namespace PollyService.Controllers
             return Enumerable.Range(1, 5).Select(index => Summaries[rng.Next(Summaries.Length)])
                 .ToArray();
         }
+
+        [HttpGet("Cache")]
+        public IEnumerable<string> Cache(string start)
+        {
+            return Summaries.Where(m => m.StartsWith(start));
+        }
     }
 }

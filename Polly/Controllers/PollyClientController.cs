@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Polly.Caching;
+using Polly.Registry;
 using PollyClient;
 using System;
 using System.Collections.Generic;
@@ -13,10 +15,12 @@ namespace Polly.Controllers
     public class PollyClientController : ControllerBase
     {
         private readonly IPollyApiProvider _pollyApiProvider;
+        private readonly IPolicyRegistry<string> _policyRegistry;
 
-        public PollyClientController(IPollyApiProvider pollyApiProvider)
+        public PollyClientController(IPollyApiProvider pollyApiProvider, IPolicyRegistry<string> policyRegistry)
         {
             _pollyApiProvider = pollyApiProvider;
+            _policyRegistry = policyRegistry;
         }
 
         [HttpGet("Timeout")]
@@ -51,6 +55,16 @@ namespace Polly.Controllers
         public async Task<ActionResult> BulkheadIsolation()
         {
             var result = await _pollyApiProvider.GetWorkingDelayed();
+            return Ok(result);
+        }
+
+        [HttpGet("Cache")]
+        public async Task<ActionResult> Cache(string start)
+        {
+            var cachePolicy = _policyRegistry.Get<AsyncCachePolicy<List<string>>>("CachingPolicy");
+            Context policyExecutionContext = new Context($"GetCache-{start}");
+
+            var result = await cachePolicy.ExecuteAsync(context => _pollyApiProvider.GetCache(start), policyExecutionContext);
             return Ok(result);
         }
     }

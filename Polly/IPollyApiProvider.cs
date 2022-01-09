@@ -20,7 +20,7 @@ namespace PollyClient
         [Get("/pollyservice/WorkingDelayed")]
         Task<List<string>> GetWorkingDelayed();
 
-        [Get("/cache")]
+        [Get("/pollyservice/Cache")]
         Task<List<string>> GetCache(string start);
     }
 }
